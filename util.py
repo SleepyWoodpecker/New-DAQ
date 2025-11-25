@@ -10,7 +10,7 @@ from typing import Callable, TypedDict
 
 from serial import Serial
 
-STOP_SEQUENCE = b"\r\b"
+STOP_SEQUENCE = b"\r\n"
 
 
 class SetupReturn(TypedDict):

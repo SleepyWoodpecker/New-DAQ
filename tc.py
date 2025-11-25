@@ -34,7 +34,6 @@ tc_queue = queue.Queue(maxsize=20)
 
 stop_event = threading.Event()
 global_start = getTime()
-prev_time = global_start
 
 
 def decode_fn(line: bytes) -> list[float | int]:
@@ -51,6 +50,7 @@ def reader(serial: Serial, queue: queue.Queue) -> None:
 
 def process_readings(log_cal: io.TextIOWrapper, udp_connection: socket.socket) -> None:
     board_start_time = None
+    prev_time = getTime()
     while not stop_event.is_set():
         try:
             tc_line = tc_queue.get(block=True, timeout=None)
@@ -86,7 +86,7 @@ def process_readings(log_cal: io.TextIOWrapper, udp_connection: socket.socket) -
                 udp_connection.sendto(influx_string.encode(), UDP_ADDRESS_PORT)
 
                 # print out this debug string at the same time
-                logger.debug(influx_string)
+                logger.info(influx_string)
         except Exception as e:
             trace_dump = traceback.format_exc()
             logger.warning(

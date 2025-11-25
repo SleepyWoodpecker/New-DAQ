@@ -25,7 +25,9 @@ EXPECTED_PACKET_LENGTH = 12 + 2
 DATA_CHANNELS = [
     f"lc{i}" for i in range(NUM_SENSORS)
 ]  # Naming load cells as lc0, lc1, etc.
-LOG_FILE = "/home/ares_gs/synnax_node/scripts/logs/lc_data_grafana.csv"  # CSV log file for local logging
+# LOG_FILE = "/home/ares_gs/synnax_node/scripts/logs/lc_data_grafana.csv"  # CSV log file for local logging
+LOG_FILE = "./logs/lc_data_grafana.csv"  # CSV log file for local logging
+
 UDP_ADDRESS_PORT = ("127.0.0.1", 4030)  # Grafana UDP server address and port
 MEASUREMENT = "loadvals"  # Measurement name for Grafana
 
@@ -43,7 +45,6 @@ lc_queue = queue.Queue(maxsize=20)
 
 stop_event = threading.Event()
 global_start = getTime()
-prev_time = global_start
 
 
 def decode_fn(line: bytes) -> list[float | int]:
@@ -60,6 +61,8 @@ def reader(serial: Serial, queue: queue.Queue) -> None:
 
 def process_readings(log_cal: io.TextIOWrapper, udp_connection: socket.socket) -> None:
     board_start_time = None
+    prev_time = getTime()
+
     while not stop_event.is_set():
         try:
             lc_line = lc_queue.get(block=True, timeout=None)
@@ -90,7 +93,7 @@ def process_readings(log_cal: io.TextIOWrapper, udp_connection: socket.socket) -
                 udp_connection.sendto(influx_string.encode(), UDP_ADDRESS_PORT)
 
                 # print out this debug string at the same time
-                logger.debug(influx_string)
+                logger.info(influx_string)
         except Exception as e:
             trace_dump = traceback.format_exc()
             logger.warning(
