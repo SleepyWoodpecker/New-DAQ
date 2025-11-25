@@ -119,7 +119,7 @@ def setup(
     }
 
 
-def _sync(serial_port: Serial) -> None:
+def sync(serial_port: Serial) -> None:
     """Reads till the control character \r\n is found"""
     # may want to only make this call to reset the buffer when we start the program so we don't lose too much data
     serial_port.reset_input_buffer()
@@ -133,15 +133,15 @@ def read_serial(serial_port: Serial, expected_packet_length: int) -> bytes | Non
             line += serial_port.read(expected_packet_length - l)
 
             if not line.endswith(STOP_SEQUENCE):
-                print(f"""[Reader {READING_TYPE}] End sequence wrong""")
-                _sync(serial_port)
+                print(f"""[Reader {READING_TYPE}] End sequence wrong {line[:-2]}""")
+                sync(serial_port)
                 continue
 
         line = line.removesuffix(STOP_SEQUENCE)
         return line
     except Exception as e:
         print(f"""[Reader {READING_TYPE}] {str(e)}""")
-        _sync(serial_port)
+        sync(serial_port)
 
 
 def getTime():

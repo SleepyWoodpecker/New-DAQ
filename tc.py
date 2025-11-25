@@ -9,7 +9,7 @@ import traceback
 
 from serial import Serial
 
-from util import getTime, read_serial, setup
+from util import getTime, read_serial, setup, sync
 
 ##########################
 #### CONFIGURATIONS ######
@@ -25,12 +25,12 @@ DATA_CHANNELS = [
 ]  # Naming thermocouples as tc0, tc1, etc.
 EXPECTED_PACKET_LENGTH = 112 + 2
 
-LOG_FILE = "./logs/tc_data_grafana.csv"  # CSV log file for local logging
+LOG_FILE = "./logs/tc_2_data_grafana.csv"  # CSV log file for local logging
 UDP_ADDRESS_PORT = ("127.0.0.1", 40113)  # Grafana UDP server address and port
 MEASUREMENT = "temperaturevals"  # Measurement name for Grafana
 
 DATA_RATE = int(50)  # Rate that data is sent to the Raspberry Pi (Hz)
-GRAFANA_RATE_DIVISOR = int(DATA_RATE / 10)  # Stream to Grafana at 10 Hz
+GRAFANA_RATE_DIVISOR = 100  # Stream to Grafana at 10 Hz
 
 tc_queue = queue.Queue(maxsize=20)
 
@@ -43,6 +43,7 @@ def decode_fn(line: bytes) -> list[float | int]:
 
 
 def reader(serial: Serial, queue: queue.Queue) -> None:
+    sync(serial_port=serial)
     while not stop_event.is_set():
         data = read_serial(
             serial_port=serial, expected_packet_length=EXPECTED_PACKET_LENGTH
@@ -57,7 +58,6 @@ def process_readings(log_cal: io.TextIOWrapper, udp_connection: socket.socket) -
         try:
             tc_line = tc_queue.get(block=True, timeout=None)
             tc_queue.task_done()
-            print(len(tc_line))
             decoded_tc = decode_fn(tc_line)
 
             if not board_start_time:
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         timeout=0.2,
         log_raw_name=None,
         log_cal_name=LOG_FILE,
-        reading_type="PTs",
+        reading_type="TCs",
     )
     atexit.register(setup_dict["cleanup_function"])
 

@@ -9,7 +9,7 @@ import traceback
 
 from serial import Serial
 
-from util import getTime, read_serial, setup
+from util import getTime, read_serial, setup, sync
 
 PORT_HV = (
     "/dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_B4:3A:45:B3:70:B0-if00"
@@ -57,6 +57,7 @@ def decode_fn(line: bytes) -> list[float | int]:
 
 
 def reader(serial_port: Serial, queue: queue.Queue) -> None:
+    sync(serial_port=serial_port)
     while not stop_event.is_set():
         data = read_serial(
             serial_port=serial_port, expected_packet_length=EXPECTED_PACKET_LENGTH

@@ -9,7 +9,7 @@ import traceback
 
 from serial import Serial
 
-from util import getTime, read_serial, setup
+from util import getTime, read_serial, setup, sync
 
 ##########################
 #### CONFIGURATIONS ######
@@ -26,7 +26,7 @@ DATA_CHANNELS = [
     f"lc{i}" for i in range(NUM_SENSORS)
 ]  # Naming load cells as lc0, lc1, etc.
 # LOG_FILE = "/home/ares_gs/synnax_node/scripts/logs/lc_data_grafana.csv"  # CSV log file for local logging
-LOG_FILE = "./logs/lc_data_grafana.csv"  # CSV log file for local logging
+LOG_FILE = "./logs/lc_2_data_grafana.csv"  # CSV log file for local logging
 
 UDP_ADDRESS_PORT = ("127.0.0.1", 4030)  # Grafana UDP server address and port
 MEASUREMENT = "loadvals"  # Measurement name for Grafana
@@ -52,6 +52,7 @@ def decode_fn(line: bytes) -> list[float | int]:
 
 
 def reader(serial: Serial, queue: queue.Queue) -> None:
+    sync(serial_port=serial)
     while not stop_event.is_set():
         data = read_serial(
             serial_port=serial, expected_packet_length=EXPECTED_PACKET_LENGTH
@@ -108,10 +109,10 @@ if __name__ == "__main__":
     setup_dict = setup(
         serial_port_names=[PORT],
         baudrate=BAUDRATE,
-        timeout=0.2,
+        timeout=0.05,
         log_raw_name=None,
         log_cal_name=LOG_FILE,
-        reading_type="PTs",
+        reading_type="LCs",
     )
     atexit.register(setup_dict["cleanup_function"])
 
