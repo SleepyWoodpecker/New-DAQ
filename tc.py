@@ -14,16 +14,18 @@ from util import getTime, read_serial, setup
 ##########################
 #### CONFIGURATIONS ######
 ##########################
-PORT = "/dev/cu.usbmodem2101"
+PORT = (
+    "/dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_48:CA:43:5E:0C:28-if00"
+)
 BAUDRATE = 115200
 NUM_SENSORS = 13  # Number of thermocouples (1 to 15)
 
 DATA_CHANNELS = [
     f"tc{i+1}" for i in range(NUM_SENSORS)
 ]  # Naming thermocouples as tc0, tc1, etc.
-EXPECTED_PACKET_LENGTH = 42
+EXPECTED_PACKET_LENGTH = 112 + 2
 
-LOG_FILE = "./tc_data_grafana.csv"  # CSV log file for local logging
+LOG_FILE = "./logs/tc_data_grafana.csv"  # CSV log file for local logging
 UDP_ADDRESS_PORT = ("127.0.0.1", 40113)  # Grafana UDP server address and port
 MEASUREMENT = "temperaturevals"  # Measurement name for Grafana
 
@@ -55,7 +57,7 @@ def process_readings(log_cal: io.TextIOWrapper, udp_connection: socket.socket) -
         try:
             tc_line = tc_queue.get(block=True, timeout=None)
             tc_queue.task_done()
-
+            print(len(tc_line))
             decoded_tc = decode_fn(tc_line)
 
             if not board_start_time:
